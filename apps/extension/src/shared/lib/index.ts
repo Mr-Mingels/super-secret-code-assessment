@@ -1,0 +1,1 @@
+export { extensionFetch } from './extension';
