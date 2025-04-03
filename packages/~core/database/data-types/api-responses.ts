@@ -1,9 +1,8 @@
 /**
- * Type definitions for API responses and requests
- * These types are used throughout the application for communication with the backend
+ * Type definitions for API responses used across the application
  */
 
-import type { Durations } from "~core/database";
+import type { Durations } from './durations'
 
 /**
  * Generic wrapper for all API responses

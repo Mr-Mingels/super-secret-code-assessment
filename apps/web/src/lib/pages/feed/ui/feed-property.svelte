@@ -1,9 +1,38 @@
 <script lang="ts">
   import { CashSVG, DimensionsSVG } from '~ui/assets'
   import type { Property } from '~core/database'
-  import { CommuteTime } from '$lib/widgets'
+  import { CommuteTime } from '~ui/components'
+  import api from '~api'
 
   export let property: Property
+  
+  /**
+   * Web-specific implementation to fetch commute durations
+   * Uses the web API client directly
+   * Since this is a "one-off" request, I don't think we need to store this function in a sharable folder for reuse
+   */
+  const fetchDurations = async () => {
+    try {
+      const { data, error } = await api.commute.durations.get();
+      
+      if (error || !data || data.status === 'error') {
+        return {
+          durations: null,
+          error: error || 'Failed to load commute times'
+        };
+      }
+      
+      return {
+        durations: data.payload.durations,
+        error: null
+      };
+    } catch (e) {
+      return {
+        durations: null,
+        error: e instanceof Error ? e.message : 'Unknown error'
+      };
+    }
+  };
 </script>
 
 <div
@@ -51,5 +80,5 @@
       {/if}
     </div>
   </div>
-  <CommuteTime />
+  <CommuteTime {fetchDurations} />
 </div>

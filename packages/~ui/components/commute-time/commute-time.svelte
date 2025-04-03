@@ -2,38 +2,38 @@
   import type { Durations } from '~core/database'
   import { RouteSVG } from '~ui/assets'
   import { Button } from '~ui/components'
-  import { extensionFetch } from '../../../shared/lib'
-  import type { ApiResponse, CommuteResponse } from '../../../shared/types'
+
+  /**
+   * Function to fetch commute durations
+   * This is provided by the parent component and will differ between web and extension
+   */
+  export let fetchDurations: () => Promise<{
+    durations: Durations | null;
+    error: string | null;
+  }>;
 
   // Component states
   let loading = false
-  // Added an error state to handle errors from the background script, cus why not?
   let error: string | null = null
   let durations: Durations | null = null
 
   /**
-   * Load commute durations data via the background script
-   * This avoids CORS issues by using the extension's background script
-   * to make API requests instead of making them directly from the content script
+   * Load commute durations data using the provided fetch function
    */
   const load = async () => {
     loading = true
     error = null
     
     try {
-      // Use the extensionFetch utility to make the API request through the background script
-      const response = await extensionFetch<ApiResponse<CommuteResponse>>('/commute/durations');
+      const result = await fetchDurations();
       
-      // Handle the response
-      const { data } = response;
-      
-      if (!data || data.status === 'error') {
-        error = 'Failed to load commute times';
+      if (result.error) {
+        error = result.error;
         durations = null;
         return;
       }
       
-      durations = data.payload.durations;
+      durations = result.durations;
     } catch (e) {
       error = e instanceof Error ? e.message : 'Unknown error';
       durations = null;
@@ -57,4 +57,4 @@
     <!-- TODO: make it pretty! -->
     {JSON.stringify(durations, null, 2)}
   {/if}
-</div>
+</div> 

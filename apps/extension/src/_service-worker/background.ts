@@ -1,4 +1,4 @@
-import type { ApiResponse, CommuteResponse } from '../shared/types'
+import type { ApiResponse, CommuteResponse } from '~core/database'
 
 const API_BASE_URL = 'http://localhost:5002';
 
