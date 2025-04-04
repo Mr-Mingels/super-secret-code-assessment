@@ -43,11 +43,13 @@ function sendToBackground<T>(message: ApiRequestMessage): Promise<T> {
  * @param params - Optional parameters for the request (will be sent as query params for GET, body for others)
  * @returns A Promise that resolves with the API response
  */
+// Disabling this rule because we need to be able to pass any type to the body and params
+/* eslint-disable @typescript-eslint/no-explicit-any */
 export async function extensionFetch<T>(
     endpoint: string,
     method: RequestMethod = 'GET',
-    body?: Record<string, unknown> | null,
-    params?: Record<string, string | number | boolean | null | undefined> | null
+    body?: any,
+    params?: any
 ): Promise<T> {
     try {
         return await sendToBackground<T>({
@@ -61,4 +63,5 @@ export async function extensionFetch<T>(
         console.error('Extension API request failed:', error);
         throw error;
     }
-} 
+}
+/* eslint-enable @typescript-eslint/no-explicit-any */

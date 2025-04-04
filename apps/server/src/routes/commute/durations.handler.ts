@@ -21,7 +21,7 @@ export const commuteDurationsEndpointHandler = app.get(
     } catch (error) {
       console.error('Failed to parse addresses', error)
     }
-    
+
     // mock commute times
     const addressDurations: AddressDuration[] = addresses.map((address) => ({
       address,

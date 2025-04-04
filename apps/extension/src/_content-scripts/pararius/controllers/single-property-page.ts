@@ -39,7 +39,7 @@ class ParariusController extends SinglePropertyPageController {
         '/commute/durations', 
         'GET', 
         null,
-        { addresses: JSON.stringify(addresses) }
+        { addresses }
       );
       
       const { data } = response;
