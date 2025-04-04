@@ -1,7 +1,8 @@
 <script lang="ts">
   import { CashSVG, DimensionsSVG } from '~ui/assets'
-  import type { Property } from '~core/database'
+  import type { Property, CommuteAddress } from '~core/database'
   import { CommuteTime } from '~ui/components'
+  import { storage } from '~core/helpers'
   import api from '~api'
 
   export let property: Property
@@ -13,72 +14,71 @@
    */
   const fetchDurations = async () => {
     try {
-      const { data, error } = await api.commute.durations.get();
+      const addresses: CommuteAddress[] = storage.getCommuteAddresses()
+      
+      const { data, error } = await api.commute.durations.get({ $query: { addresses: JSON.stringify(addresses) } });
       
       if (error || !data || data.status === 'error') {
         return {
-          durations: null,
+          addressDurations: null,
           error: error || 'Failed to load commute times'
         };
       }
       
       return {
-        durations: data.payload.durations,
+        addressDurations: data.payload.addressDurations,
         error: null
       };
     } catch (e) {
       return {
-        durations: null,
+        addressDurations: null,
         error: e instanceof Error ? e.message : 'Unknown error'
       };
     }
   };
 </script>
 
-<div
-  class=".relative .flex .h-[200px] .min-w-[540px] .grow .rounded-md .bg-white .text-left .shadow-md"
->
-  <span class=".contents">
-    <span
-      class=".relative .h-full .w-[250px] .overflow-hidden .rounded-l-md xl:.w-[200px]"
-    >
-      <span
-        class=".absolute .bottom-0 .left-0 .right-0 .top-0 .bg-cover .bg-center"
-        style="background-image: url({property.previewImageURL})"
-      ></span>
-    </span>
-  </span>
-  <div class=".flex .min-h-[180px] .flex-1 .flex-col .p-3 .pl-6 xs:.pl-3">
-    <div class=".flex .flex-col .gap-1">
-      <span
-        class=".relative .max-w-[calc(100%-6rem)] .self-start .text-left .font-bold .text-primary hover:.underline"
+<div class=".flex .flex-col .rounded-md .bg-white .text-left .shadow-md .h-full">
+  <!-- Property Image -->
+  <div class=".relative .w-full .h-[180px] .overflow-hidden .rounded-t-md">
+    <img
+      alt="property preview"
+      class=".h-full .w-full .object-cover .object-center"
+      src={property.previewImageURL}
+     />
+  </div>
+  
+  <!-- Property Details -->
+  <div class=".p-4 .flex .flex-col .flex-grow">
+    <div class=".flex .flex-col .gap-1 .mb-3">
+      <a
+        href={property.sourceURL}
+        target="_blank"
+        class=".font-semibold .text-primary .text-lg .hover:underline .line-clamp-2"
       >
-        <a
-          href={property.sourceURL}
-          target="_blank"
-          class=".font-semibold .text-primary"
-        >
-          {property.title}
-        </a>
-      </span>
+        {property.title}
+      </a>
       <span class=".text-gray-600">{property.cityName}</span>
     </div>
-    <div class=".mt-2 .flex .grow .flex-col .justify-center .gap-1">
+    
+    <div class=".flex .gap-6 .mb-4">
       {#if property.price}
-        <span class=".flex .gap-2">
+        <span class=".flex .items-center .gap-2">
           <CashSVG />
-          <b>{property.price}</b> /month
+          <span><b>{property.price}</b> /month</span>
         </span>
       {/if}
       {#if property.area}
-        <span class=".flex .gap-2">
+        <span class=".flex .items-center .gap-2">
           <DimensionsSVG />
-          <span>
-            <b>{property.area}</b> m²
-          </span>
+          <span><b>{property.area}</b> m²</span>
         </span>
       {/if}
     </div>
+    
+    <!-- Commute Time Component -->
+    <div class=".border-t .border-gray-200 .pt-4 .mt-auto .flex .items-center .justify-center">
+      <CommuteTime {fetchDurations} />
+    </div>
   </div>
-  <CommuteTime {fetchDurations} />
 </div>

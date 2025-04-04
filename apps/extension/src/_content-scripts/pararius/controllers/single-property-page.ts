@@ -1,7 +1,8 @@
 import { SinglePropertyPageController } from '@features'
 import { CommuteTime } from '~ui/components'
-import type { ApiResponse, CommuteResponse } from '~core/database'
+import type { ApiResponse, CommuteResponse, CommuteAddress } from '~core/database'
 import { extensionFetch } from '../../../shared/lib'
+import { storage } from '~core/helpers'
 
 class ParariusController extends SinglePropertyPageController {
   initialized = false
@@ -31,24 +32,32 @@ class ParariusController extends SinglePropertyPageController {
    */
   private fetchDurations = async () => {
     try {
-      const response = await extensionFetch<ApiResponse<CommuteResponse>>('/commute/durations');
+      const addresses: CommuteAddress[] = storage.getCommuteAddresses()
+
+      // Send addresses as params object with an addresses property
+      const response = await extensionFetch<ApiResponse<CommuteResponse>>(
+        '/commute/durations', 
+        'GET', 
+        null,
+        { addresses: JSON.stringify(addresses) }
+      );
       
       const { data } = response;
       
       if (!data || data.status === 'error') {
         return {
-          durations: null,
-          error: 'Failed to load commute times'
+          addressDurations: null,
+          error: data?.message || 'Failed to load commute times'
         };
       }
       
       return {
-        durations: data.payload.durations,
+        addressDurations: data.payload.addressDurations,
         error: null
       };
     } catch (e) {
       return {
-        durations: null,
+        addressDurations: null,
         error: e instanceof Error ? e.message : 'Unknown error'
       };
     }

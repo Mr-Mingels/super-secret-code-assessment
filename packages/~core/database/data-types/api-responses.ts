@@ -2,7 +2,7 @@
  * Type definitions for API responses used across the application
  */
 
-import type { Durations } from './durations'
+import type { AddressDuration } from './durations'
 
 /**
  * Generic wrapper for all API responses
@@ -17,8 +17,9 @@ export type ApiResponse<T> = {
  * Response structure for the commute durations endpoint
  */
 export type CommuteResponse = {
-    status: string;
+    status: 'success' | 'error';
     payload: {
-        durations: Durations;
+        addressDurations: AddressDuration[];
     };
+    message?: string;
 } 

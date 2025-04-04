@@ -1,4 +1,5 @@
-import type { ApiResponse, CommuteResponse } from '~core/database'
+import type { ApiResponse, CommuteResponse, CommuteAddress } from '~core/database'
+import { STORAGE_KEYS } from '~core/constants'
 
 const API_BASE_URL = 'http://localhost:5002';
 
@@ -11,11 +12,21 @@ const apiProxy = {
         durations: {
             /**
              * Fetch commute durations from the API
+             * @param addresses Array of addresses to calculate commute times for
              * @returns Promise with commute duration data or error information
              */
-            async get(): Promise<ApiResponse<CommuteResponse>> {
+            async get(addresses?: CommuteAddress[]): Promise<ApiResponse<CommuteResponse>> {
                 try {
-                    const response = await fetch(`${API_BASE_URL}/commute/durations`, {
+                    // Build query string for addresses if provided
+                    let url = `${API_BASE_URL}/commute/durations`;
+                    
+                    if (addresses) {
+                        // Convert addresses to a JSON string for the query parameter
+                        const addressesParam = encodeURIComponent(JSON.stringify(addresses));
+                        url = `${url}?addresses=${addressesParam}`;
+                    }
+                    
+                    const response = await fetch(url, {
                         method: 'GET',
                         credentials: 'include',
                         headers: {
@@ -42,6 +53,35 @@ const apiProxy = {
 };
 
 /**
+ * Simplified address service for handling address storage in the extension
+ */
+const addressService = {
+    /**
+     * Save addresses to chrome.storage.local
+     * @param addresses Array of commute addresses to save
+     */
+    saveAddresses(addresses: CommuteAddress[]): Promise<void> {
+        return new Promise<void>((resolve) => {
+            chrome.storage.local.set({ [STORAGE_KEYS.COMMUTE_ADDRESSES]: addresses }, () => {
+                resolve();
+            });
+        });
+    },
+
+    /**
+     * Get addresses from chrome.storage.local
+     * @returns Promise resolving to array of commute addresses
+     */
+    getAddresses(): Promise<CommuteAddress[]> {
+        return new Promise((resolve) => {
+            chrome.storage.local.get([STORAGE_KEYS.COMMUTE_ADDRESSES], (result) => {
+                resolve(result[STORAGE_KEYS.COMMUTE_ADDRESSES] || []);
+            });
+        });
+    }
+};
+
+/**
  * Message handler for one-time requests from content scripts
  * Uses the standard chrome.runtime.sendMessage API
  */
@@ -53,11 +93,11 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     }
 
     if (message.type === 'API_REQUEST') {
-        const { endpoint, method } = message;
+        const { endpoint, method, params } = message;
 
         // Route to the appropriate API handler
         if (endpoint === '/commute/durations' && method === 'GET') {
-            apiProxy.commute.durations.get()
+            apiProxy.commute.durations.get(params?.addresses)
                 .then(sendResponse)
                 .catch(error => {
                     console.error('Error in API proxy:', error);
@@ -69,6 +109,25 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         } else {
             sendResponse({ error: `Unsupported endpoint: ${endpoint}` });
         }
+    } else if (message.type === 'GET_ADDRESSES') {
+        addressService.getAddresses()
+            .then(addresses => sendResponse({ addresses }))
+            .catch(error => {
+                console.error('Error retrieving addresses:', error);
+                sendResponse({ error: error instanceof Error ? error.message : 'Unknown error' });
+            });
+        return true; // Keep connection open for async response
+    } else if (message.type === 'SAVE_ADDRESSES') {
+        addressService.saveAddresses(message.addresses)
+            .then(() => sendResponse({ success: true }))
+            .catch(error => {
+                console.error('Error saving addresses:', error);
+                sendResponse({ 
+                    error: error instanceof Error ? error.message : 'Unknown error',
+                    success: false
+                });
+            });
+        return true; // Keep connection open for async response
     }
 
     return false; // No async response expected for other message types

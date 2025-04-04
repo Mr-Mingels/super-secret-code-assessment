@@ -20,7 +20,8 @@
       "ESNext"
     ],
     "types": [
-      "chrome"
+      "chrome",
+      "bun-types"
     ],
     "paths": {
       "@app/*": [

@@ -60,12 +60,18 @@ declare const app: import("elysia").default<"", false, {
 					200: {
 						status: "success";
 						payload: {
-							durations: {
-								walking: number | null;
-								driving: number | null;
-								transit: number | null;
-								biking: number | null;
-							};
+							addressDurations: {
+								address: {
+									id: string;
+									address: string;
+								};
+								durations: {
+									walking: number | null;
+									driving: number | null;
+									transit: number | null;
+									biking: number | null;
+								};
+							}[];
 						};
 					};
 				} | {

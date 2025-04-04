@@ -17,4 +17,12 @@ export const DurationsSchema = t.Object({
   biking: t.Union([t.Number(), t.Null()]),
 })
 
+export const AddressDurationSchema = t.Object({
+  address: t.Object({
+    id: t.String(),
+    address: t.String(),
+  }),
+  durations: DurationsSchema,
+})
+
 export { t }

@@ -19,3 +19,13 @@ input.uprent {
 .uprent-hidden {
   display: none !important;
 }
+
+// Added this global class to override the default font-family for the websites that the extension is injected into
+.uprent-font-poppins {
+  font-family: 'Poppins', sans-serif !important;
+}
+
+// Modal z-index needs to be high to appear above all site content
+.uprent-modal-overlay {
+  z-index: 999999 !important;
+}

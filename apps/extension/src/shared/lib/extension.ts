@@ -12,7 +12,7 @@ import type { ApiRequestMessage, RequestMethod } from "./types";
  * @param message - The message to send to the background script
  * @returns A Promise that resolves with the response from the background script
 */
-async function sendToBackground<T>(message: ApiRequestMessage): Promise<T> {
+function sendToBackground<T>(message: ApiRequestMessage): Promise<T> {
     return new Promise<T>((resolve, reject) => {
         chrome.runtime.sendMessage(message, (response) => {
             // Check for extension context errors
@@ -40,19 +40,22 @@ async function sendToBackground<T>(message: ApiRequestMessage): Promise<T> {
  * @param endpoint - The API endpoint to call (e.g., '/commute/durations')
  * @param method - The HTTP method to use
  * @param body - Optional request body for POST/PUT/PATCH requests
+ * @param params - Optional parameters for the request (will be sent as query params for GET, body for others)
  * @returns A Promise that resolves with the API response
  */
 export async function extensionFetch<T>(
     endpoint: string,
     method: RequestMethod = 'GET',
-    body?: any
+    body?: Record<string, unknown> | null,
+    params?: Record<string, string | number | boolean | null | undefined> | null
 ): Promise<T> {
     try {
         return await sendToBackground<T>({
             type: 'API_REQUEST',
             endpoint,
             method,
-            body
+            body,
+            params // Send as params instead of body
         });
     } catch (error) {
         console.error('Extension API request failed:', error);
