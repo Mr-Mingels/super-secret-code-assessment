@@ -36,6 +36,18 @@ export const storage = {
       // Save to localStorage first (works in both contexts)
       localStorage.setItem(STORAGE_KEYS.COMMUTE_ADDRESSES, JSON.stringify(addresses));
       
+      // Dispatch events to notify all components on the same page
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('uprent:addresses-updated', { 
+          detail: { addresses } 
+        }));
+        
+        // Also dispatch cleanup event
+        window.dispatchEvent(new CustomEvent('uprent:clean-address-durations', { 
+          detail: { validAddressIds: addresses.map(addr => addr.id) } 
+        }));
+      }
+      
       // In extension context: also save to chrome.storage
       if (isExtension()) {
         chrome.storage.local.set({ [STORAGE_KEYS.COMMUTE_ADDRESSES]: addresses });
@@ -85,6 +97,13 @@ export const storage = {
     try {
       // Save to localStorage first (works in both contexts)
       localStorage.setItem(STORAGE_KEYS.MAX_DURATIONS, JSON.stringify(maxDurations));
+      
+      // Dispatch events to notify all components on the same page
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('uprent:max-durations-updated', { 
+          detail: { maxDurations } 
+        }));
+      }
       
       // In extension context: also save to chrome.storage
       if (isExtension()) {
